@@ -1,0 +1,23 @@
+rm(list = ls())
+setwd("./apia")
+source("sgs.R")
+source("metasgs.R")
+source("unidadesgs.R")
+source("usuariosgs.R")
+source("agendasgs.R")
+source("atualizarsgs.R")
+source("ttk.R")
+source("tt1.R")
+source("tt4.R")
+source("tt12.R")
+source("ackt.R")
+source("ac4t.R")
+source("ac12m.R")
+source("n2mk.R")
+source("anualizam.R")
+source("anualizat.R")
+source("trimestralizam.R")
+senha <- "SPEsgst2014/"
+db <- "sgs_spe"
+ip <- "10.10.76.90"
+setwd("..")

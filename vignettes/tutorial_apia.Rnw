@@ -1,0 +1,356 @@
+\documentclass[12pt]{article}
+\usepackage[latin1]{inputenc}
+\usepackage[brazil,brazilian]{babel}
+
+\title{Usando o SGS da SPE atrav\' es do \textsf{R} usando a
+biblioteca APIA}
+\author{Rog\' erio Porto}
+
+\date{18 de maio de 2015}
+
+\begin{document}
+\maketitle
+
+\section{Introdu\c c\~ ao}
+
+Apresentamos um breve tutorial de como usar o SGS da SPE atrav\' es do 
+\textsf{R}
+para consultar e analisar as s\' eries que est\~ ao no SGS. 
+N\~ ao pretendemos inserir, excluir nem alterar dados do SGS atrav\' es do
+\textsf{R}.
+Al\' em disso, escrevemos este tutorial com o objetivo de documentar
+e testar as fun\c c\~ oes que existem, enquanto esse conjunto de 
+fun\c c\~ oes n\~ ao se transforma em um pacote. 
+Ou seja, este tutorial dever\' a sofrer altera\c c\~ oes futuras.
+
+Desse modo, se os exemplos deste texto n\~ ao funcionarem exatamente como
+apresentados, ent\~ ao h\' a defasagem entre a biblioteca de fun\c c\~ oes, 
+a vers\~ ao do tutorial, a base do SGS ou combina\c c\~ oes dessas.
+
+Esperamos que o leitor tenha um conhecimento m\'\i nimo do ambiente \textsf{R}
+e disposi\c c\~ ao para usar uma interface do tipo linha de comando (que pode
+ser program\' avel, como o Stata) em detrimento de interfaces do tipo {\em 
+point-and-click}, como o Eviews.
+
+\section{Acessando o SGS}
+
+Para ter acesso ao SGS atrav\' es do R, desenvolvemos uma biblioteca de 
+fun\c c\~ oes chamada APIA (pronuncia-se ``\' apia''). 
+Antes de usar a APIA, precisamos ter o 
+arquivo \texttt{apia.R}
+e o diret\' orio \texttt{apia} no endere\c co de trabalho que, em geral,
+deve ser a pasta 
+\texttt{Documentos}, que fica em 
+\texttt{C:\textbackslash Users\textbackslash numerodoCPF\textbackslash 
+Documents}.
+
+Com isso, inicie uma sess\~ ao do \textsf{R} 
+(clicando no \'\i cone do \textsf{R} que est\' a no \textit{desktop} do
+computador).
+Iremos precisar do pacote \texttt{RMySQL} que pode ser instalado digitando
+\texttt{install.packages("RMySQL")} e escolhendo o reposit\' orio mais 
+pr\' oximo.
+
+Agora basta digitar
+<<>>=
+source("apia.R")
+@
+e j\' a temos acesso a fun\c c\~ oes que acessam os dados e metadados do SGS.
+
+Vamos come\c car vendo quais s\' eries est\~ ao previstas para serem
+divulgadas em um determinado dia, por exemplo no dia 18, digitando
+<<>>=
+agendasgs(18)
+@
+ou
+<<>>=
+agendasgs(dias = 18)
+@
+
+Podem aparecer algumas mensagens de aviso que devem simplesmente ser 
+ignoradas.
+Para essas mensagens n\~ ao aparecerem, podemos armazenar o resultado da
+agenda em um objeto \texttt{a}, por exemplo,
+<<>>=
+a <- agendasgs(18)
+@
+e imprimindo o objeto \texttt{a} na tela
+<<>>=
+a
+@
+
+Para saber a agenda dos dias 18 e 20, digite
+<<>>=
+a <- agendasgs(c(18, 20))
+a
+@
+
+Para saber a agenda do dia 16 at\' e o dia 18, digite
+<<>>=
+a <- agendasgs(16:18)
+a
+@
+Note que o resultado aparece ordenado por defasagem, fonte, c\' odigo e dia.
+Uma vez que o resultado est\' a armazenado em um objeto, podem ser feitas
+manipula\c c\~ oes usuais como, por exemplo, selecionar apenas uma das
+fontes que possuem s\' eries previstas para serem divulgadas nesses dias
+<<>>=
+subset(a, fonte == "ACSP")
+@
+
+Uma outra fun\c c\~ ao relacionada \` a anterior \' e a que seleciona todas as
+s\' eries que deveriam estar atualizadas segundo o calend\' ario do SGS. Para
+isso digite o comando seguinte que armazena dados dessas s\' eris no objeto
+\texttt{b}:
+<<>>=
+b <- atualizarsgs()
+@
+Em seguida, podemos usar as fun\c c\~ oes usuais do \textsf{R} para, por exemplo,
+criar uma tabela com a quantidade de s\' eries a atualizar segundo o c\' odigo 
+do respons\' avel e a fonte, conforme a seguir,
+<<>>=
+table(b$fonte, b$responsavel)
+@
+ou simplesmente a lista dos c\' odigos das s\' eries a atualizar em ordem 
+alfab\' etica:
+<<>>=
+sort(b[, "codigo"])
+@
+
+Podemos tamb\' em consultar os metadados de uma s\' erie espec\'\i fica
+no SGS com
+<<>>=
+b <- metasgs("SPC")
+b[c("idserie", "nome", "frequencia")]
+@
+ou, simplesmente,
+<<>>=
+metasgs("SPC")
+@
+
+Para consultar os metadados de v\' arias s\' eries de uma s\' o vez
+basta digitar, por exemplo,
+<<>>=
+b <- metasgs(codigo = c("SPC", "SPC_sa"))
+b[c("idserie", "nome", "frequencia")]
+@
+
+Como existem muitas
+s\' eries no SGS, podemos armazenar todos os metadados em um objeto para
+consultarmos sempre que necess\' ario e fazermos as manipula\c c\~ oes
+que desejarmos:
+<<>>=
+b <- metasgs()
+@
+
+Tamb\' em podemos consultar todas as unidades de medida cadastradas no SGS 
+digitando \texttt{unidadesgs()} e todos os usu\' arios cadastrados digitando 
+\texttt{usuariosgs()}.
+Nestes dois casos as fun\c c\~ oes n\~ ao t\^ em par\^ ametros, isto \' e, 
+n\~ ao deve ter nada entre os par\^ enteses.
+
+\section{Acessando dados do SGS}
+
+At\' e agora acessamos apenas metadados do SGS. No entanto, para 
+come\c carmos fazendo an\' alises simples, precisamos acessar os dados
+do SGS.
+
+Por exemplo, vamos acessar e carregar para a mem\' oria do \textsf{R}
+duas s\' eries e armazen\' a-las
+em um objeto chamado \texttt{x} com
+<<>>=
+x1 <- sgs(freq = "t", codigos = c("PIB", "PIB_sa"))
+head(x1)
+@
+Se nada for informado em \texttt{codigos}, ent\~ ao todas as s\' eries 
+trimestrais (\texttt{freq = "t"}) ser\~ ao armazenados no objeto 
+\texttt{x}, o que pode demorar muito e tomar muito espa\c co na mem\' oria,
+principalmente com as s\' eries mensais. Portanto, use essa fun\c c\~ ao
+com cautela!
+Assim, por exemplo, podemos carregar na mem\' oria duas s\' eries mensais:
+<<>>=
+x2 <- sgs(freq = "m", codigos = c("SPC", "SPC_sa"))
+x2[721:749,]
+@
+Como existem muitas s\' eries mensais, isso pode levar um bom tempo. Assim,
+\' e melhor carregar de uma s\' o vez todas as s\' eries que pretendemos 
+analisar.
+
+\section{Realizando c\' alculos simples}
+
+\textbf{ATEN\c C\~ AO}. 
+As fun\c c\~ oes a seguir realizam c\' alculos em vetores num\' ericos gerais, 
+sem preocupa\c c\~ ao com o significado pr\' atico dos resultados.
+Ou seja, se o vetor contiver uma s\' erie temporal, iremos supor que a s\' erie 
+j\' a est\' a "arrumada" com in\'\i cio e fim corretos para os c\' alculos e, se 
+necess\' ario, com o devido ajuste sazonal.
+O \^ onus de um eventual uso incorreto cabe apenas ao usu\' ario!
+
+As fun\c c\~ oes \texttt{tt1(x)}, \texttt{tt4(x)} e \texttt{tt12(x)}
+calculam as varia\c c\~ oes percentuais na margem, interanual trimestral e 
+interanual mensal a partir de uma s\' erie \texttt{x}.
+Ou seja, se o vetor \texttt{x} contiver a série $x = \{ x_1, x_2, \ldots, x_n \}$, 
+ent\~ ao, digitando \texttt{tt1(x)} aparecer\' a na tela o resultado da 
+varia\c c\~ ao $t/(t-1)$ da s\' erie $x$, isto \' e, os valores 
+\[
+\left\{ 100\frac{x_2}{x_1}, 100\frac{x_3}{x_2}, \ldots, 100\frac{x_n}{x_{n-1}}.
+\right\}
+\]
+Por exemplo, a s\' erie da varia\c c\~ ao na margem de $x=(1, 2,\ldots, 10)$ 
+pode ser obtida digitando
+<<>>=
+x <- 1:10
+tt1(x)
+@
+Note que o primeiro elemento do vetor que \' e mostrado na tela \' e \texttt{NA}, 
+indicando que n\~ ao \' e poss\'\i vel calcular a varia\c c\~ ao na margem para 
+o primeiro elemento da s\' erie pois n\~ ao existe um valor anterior ao primeiro.
+
+Similarmente, se o vetor \texttt{x} contiver a s\' erie 
+$x = \{ x_1, x_2, \ldots, x_n \}$, 
+ent\~ ao, digitando \texttt{tt4(x)} e \texttt{tt12(x)} ir\~ ao mostrar na tela o 
+resultado da varia\c c\~ ao $t/(t-4)$ e $t/(t-12)$ da s\' erie $x$, 
+respectivamente. Voltando ao exemplo, temos
+<<>>=
+x <- 1:20
+tt4(x)
+@
+<<>>=
+tt12(x)
+@
+
+Na pr\' atica usual, a fun\c c\~ ao \texttt{tt1(x)} \' e usada com s\' eries 
+mensais ou trimestrais,
+sempre com ajuste sazonal.
+Por sua vez, as fun\c c\~ oes \texttt{tt4(x)} e \texttt{tt12(x)} s\~ ao usualmente 
+aplicadas a s\' eries trimestrais e mensais, respectivamente, sempre sem ajuste 
+sazonal.
+
+Por exemplo, a varia\c c\~ ao na margem de uma s\' erie trimestral 
+sazonalmente ajustada pode ser obtida com
+<<>>=
+calc1 <- tt1(x1$PIB_sa)
+calc1
+@
+
+J\' a a varia\c c\~ ao interanual mensal de uma s\' erie mensal pode ser 
+obtida com
+<<>>=
+calc2 <- tt12(x2[721:749, "SPC"])
+calc2
+@
+
+Note que essas fun\c c\~ oes permitem fazer coisas n\~ ao usuais como,
+por exemplo, calcular a varia\c c\~ ao na margem de uma s\' erie sem
+ajuste sazonal ou a varia\c c\~ ao interanual trimestral de uma s\' erie
+mensal (isto \' e, a varia\c c\~ ao percentual entre valores de uma
+s\' erie separados por 4 marca\c c\~ oes de tempo):
+<<>>=
+calc3 <- tt4(x2[721:749, "SPC"])
+calc3
+@
+
+Na realidade, essas fun\c c\~ oes s\~ ao casos particulares da fun\c c\~ ao
+\texttt{ttk(x, k)} que calcula a varia\c c\~ ao $t/(t-k)$ de uma s\' erie $x$ 
+qualquer, onde se espera que $k$ seja um n\' umero inteiro positivo.
+Por exemplo, podemos obter calcular a varia\c c\~ ao $t/(t-5)$ de $x$ com
+<<>>=
+ttk(x, 5)
+@
+
+Outros c\' alculos simples que s\~ ao muito utilizados na pr\' atica s\~ ao as
+varia\c c\~ oes acumuladas em quatro trimestres e em 12 meses.
+Por exemplo a varia\c c\~ ao percentual acumulada em quatro trimetres do PIB pode 
+ser obtida com
+<<>>=
+ac4t(x1$PIB)
+@
+e a varia\c c\~ ao percentual acumulada em 12 meses da s\' erie do SPC com
+<<>>=
+ac12m(x2[721:749, "SPC"])
+@
+
+Tamb\' em estes s\~ ao casos particulares de varia\c c\~ oes acumuladas em $k$ 
+per\'\i odos, onde se espera que $k$ seja um n\' umero inteiro positivo e que
+podem ser obtidas com a fu\c c\~ ao \texttt{ackt(x, k)}.
+Por exemplo, podemos fazer c\' alculos pouco usuais como
+<<>>=
+ackt(x, 2)
+@
+ou verificar curiosidades, como a de que a varia\c c\~ ao na margem \' e igual 
+\` a varia\c c\~ ao acumulada em um per\' \i odo:
+<<>>=
+cbind(tt1(x), ackt(x, 1))
+@
+
+Antes de realizar esses c\' alculos, pode ser necess\' ario fazer 
+transforma\c c\~ oes nas s\' eries como, por exemplo, diminuir a frequ\^ encia
+de mensal para trimestral ou anual ou de trimestral para anual, que pode ser
+feito com as fun\c c\~ oes \texttt{trimestralizam}, \texttt{anualizam} e 
+\texttt{anualizat}, respectivamente.
+Para ilustrar, vamos obter o total de consultas ao SCP em cada trimestre de 
+janeiro de 2013 a mar\c co de 2015, isto \' e, vamos trimestralizar uma s\' erie
+mensal.
+Essa s\' erie j\' a est\' a armazenada no objeto \texttt{x2}, nas linhas 721 a
+747:
+<<>>=
+x2[721:747, c(1, 2)]
+@
+A s\' erie mensal pode ser trimestralizada com
+<<>>=
+trimestralizam(x2[721:747, 2], FUN = sum)
+@
+Se, em vez do total em cada trimestre, quisermos saber a quantidade m\' edia
+de consultas em cada trimestre, podemos usar a mesma fun\c c\~ ao:
+<<>>=
+trimestralizam(x2[721:747, 2], FUN = mean)
+@
+Outro exemplo \' e o de anualizar uma s\' erie. Tomando como exemplo essa
+s\' erie mensal, temos duas op\c c\~ oes:
+\begin{enumerate}
+  \item anualizar a s\' erie mensal;
+	\item trimestralizar a s\' erie mensal e anualizar a s\' erie trimestral
+	resultante.
+\end{enumerate}
+Se estivermos somando os valores, essas duas op\c c\~ oes devem dar o mesmo
+resultado, veja a seguir.
+Primeiro anualizamos os dados mensais em um passo apenas com
+<<>>=
+x <- x2[721:747, 2]
+anualizam(x, FUN = sum)
+@
+Agora, vamos anualizar os dados mensais em dois passos. 
+O primeiro passo transforma a s\' erie mensal em trimestral com
+<<>>=
+x1 <- trimestralizam(x, FUN = sum)
+@
+para, em seguida, anualizar a s\' erie trimestral resultante com
+<<>>=
+anualizat(x1, FUN = sum)
+@
+
+Os resultados n\~ ao s\~ ao iguais se estivermos usando mediana em vez de soma:
+<<>>=
+x <- x2[721:747, 2]
+anualizam(x, FUN = median)
+@
+e
+<<>>=
+x1 <- trimestralizam(x, FUN = median)
+anualizat(x1, FUN = median)
+@
+Mas quem vai querer saber da quantidade mediana de consultas anuais ao SPC,
+n\~ ao \' e mesmo?
+
+Do mesmo jeito que nas fun\c c\~ oes anteriores, estes s\~ ao casos particulares
+de se transformar uma s\' erie de $n$ observa\c c\~ oes em $m$ grupos aplicando
+uma fun\c c\~ ao \texttt{FUN} em cada grupo de $k$ observa\c c\~ oes. 
+Tomando um exemplo ``maluco'', vamos calcular o desvio-padr\~ ao de cada 
+grupo de 5 observa\c c\~ oes de uma s\' erie de n\' umeros de 1 a 20, fazendo:
+<<>>=
+x <- 1:20
+n2mk(x, k = 5, FUN = sd)
+@
+
+
+\end{document}

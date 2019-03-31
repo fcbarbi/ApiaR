@@ -1,0 +1,15 @@
+Package: ApiaR
+Version: 0.1
+Date: 2015-07-01
+Title:  
+Authors@R: c( person("Rogerio Porto", "Developer", role = c("aut", "cre"), email = ""),
+              person("Fernando Barbi", "Developer", role = c("aut", "cre"), email = "fcbarbi@gmail.com"))
+Author: Rogério Porto [aut,cre], Fernando Barbi [aut, cre]
+Maintainer: Fernando Barbi <fcbarbi@gmail.com>
+Depends: R (>= 3.1.0), RMySQL
+Suggests: MASS
+Description: Package to generate economic time series forecasts. Economic activity is a monthly proxy for GDP that is only available quarterly. This package was originally developed in Matlab and later ported to R to be used in the Ministry of Finance (Brazil). APIA is an acronym to "Análise e Projeção de Indicadores de Atividade" econômica. 
+License: GPL (>= 2)
+
+
+
